@@ -1,0 +1,38 @@
+{
+  "name": "fuse-state",
+  "version": "1.0.0",
+  "description": "Relational state management",
+  "main": "./lib/index.js",
+  "repository": "https://github.com/darnfish/fuse",
+  "author": "William Gibson <william@darn.fish>",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:dev": "tsc-watch --onSuccess \"yarn test\" --compiler typescript/bin/tsc",
+		"lint": "eslint src --ext .ts,.json",
+		"lint:fix": "yarn lint --fix"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "pluralize": "^8.0.0",
+    "underscore-keypath": "^0.9.3"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.18.6",
+    "@types/jest": "^28.1.8",
+    "@types/lodash": "^4.14.184",
+    "@types/node": "^18.7.11",
+    "@types/pluralize": "^0.0.29",
+    "@typescript-eslint/eslint-plugin": "^5.35.1",
+    "@typescript-eslint/parser": "^5.35.1",
+    "eslint": "^8.23.0",
+    "esm": "^3.2.25",
+    "jest": "^28.1.3",
+    "nodemon": "^2.0.19",
+    "ts-jest": "^28.0.8",
+    "ts-node": "^10.9.1",
+    "tsc-watch": "^5.0.3",
+    "typescript": "^4.7.4"
+  }
+}
