@@ -17,7 +17,7 @@ import Fuse from 'fuse-state'
 
 // Create a Fuse instance
 const fuse = new Fuse({
-	// Define your schema relations
+	// First, define your schema relations
 	// The object key will be the model name (e.g. book)
 	// The object value will be the relation to another model (e.g. book.author = author)
 	// Values can be a single object or an array of objects
@@ -29,7 +29,7 @@ const fuse = new Fuse({
 			books: b.array('book')
 		}
 	}),
-	// You can hook into your store's mutations by calling using handler functions
+	// You can listen for updates to your store by calling using handler functions
 	handlerFns: {
 		// Use the singular for a single object update
 		book: book => {
@@ -53,7 +53,7 @@ fuse.handle({
 		id: 1,
 		name: 'My Book',
 		author: {
-			id: 2,
+			id: 1,
 			name: 'Darn Fish',
 			books: [{
 				id: 1,
@@ -71,73 +71,170 @@ fuse.handle({
 })
 
 // You can access the state tree by inspecting fuse.state
-// {
-//   "books": {
-//     "1": {
-//       "id": 1,
-//       "name": "My Book",
-//       "author": 2,
-//       "year": 2022
-//     },
-//     "2": {
-//       "id": 2,
-//       "name": "My Book: The Sequel",
-//       "starRating" 5
-//     }
-//   },
-//   "authors": {
-//     "2": {
-//       "id": 2,
-//       "name": "Darn Fish",
-//       "books": [
-//         1,
-//         2
-//       ]
-//     }
-//   }
-// }
+
+// console.log(fuse.state)
+{
+  "books": {
+    "1": {
+      "id": 1,
+      "name": "My Book",
+      "author": 1,
+      "year": 2022
+    },
+    "2": {
+      "id": 2,
+      "name": "My Book: The Sequel",
+      "starRating": 5
+    }
+  },
+  "authors": {
+    "1": {
+      "id": 1,
+      "name": "Darn Fish",
+      "books": [
+        1,
+        2
+      ]
+    }
+  }
+}
 
 fuse.handle({
 	author: {
-		id: 2,
+		id: 1,
 		age: 20,
 		books: [{
 			id: 2,
-			year: 2023
+			year: 2023,
+			author: {
+				id: 1
+			}
 		}]
 	}
 })
 
-// Book "2" now has the year attribute added above
-// Author "2" now has the age attribute added above
+// books['2'] now has the year and author attribute, as added above
+// authors['1'] now has the age attribute, as added above
 
-// {
-//   "books": {
-//     "1": {
-//       "id": 1,
-//       "name": "My Book",
-//       "author": 2,
-//       "year": 2022
-//     },
-//     "2": {
-//       "id": 2,
-//       "name": "My Book: The Sequel",
-//       "year": 2023
-//     }
-//   },
-//   "authors": {
-//     "2": {
-//       "id": 2,
-//       "name": "Darn Fish",
-//       "books": [
-//         1,
-//         2
-//       ],
-//       "age": 20
-//     }
-//   }
-// }
+// console.log(fuse.state)
+{
+  "books": {
+    "1": {
+      "id": 1,
+      "name": "My Book",
+      "author": 1,
+      "year": 2022
+    },
+    "2": {
+      "id": 2,
+      "name": "My Book: The Sequel",
+      "starRating": 5,
+      "year": 2023,
+      "author": 1
+    }
+  },
+  "authors": {
+    "1": {
+      "id": 1,
+      "name": "Darn Fish",
+      "books": [
+        1,
+        2
+      ],
+      "age": 20
+    }
+  }
+}
 
+```
+
+## Advanced Usage
+Fuse can handle very complex schemas, with deeply nested objects. For example:
+```ts
+const fuse = new Fuse({
+	schema: b => ({
+		bankAccount: {
+			balanceHistory: {
+				amount: {
+					currency: b.object('currency')
+				},
+				convertedAmounts: {
+					currency: b.object('currency')
+				}
+			}
+		},
+		currency: {}
+	})
+})
+
+fuse.handle({
+	bankAccount: {
+		id: 1,
+		balanceHistory: [{
+			amount: {
+				amount: 100,
+				currency: {
+					id: 'USD',
+					name: 'United States Dollar'
+				}
+			},
+			convertedAmounts: [{
+				amount: 100,
+				currency: {
+					id: 'GBP',
+					name: 'British Pound Sterling'
+				}
+			}, {
+				amount: 100,
+				currency: {
+					id: 'EUR',
+					name: 'Euro'
+				}
+			}]
+		}]
+	}
+})
+
+// console.log(fuse.state)
+{
+  "bankAccounts": {
+    "1": {
+      "id": 1,
+      "balanceHistory": [
+        {
+          "amount": {
+            "amount": 100,
+            "currency": "USD"
+          },
+          "convertedAmounts": [
+            {
+              "amount": 100,
+              "currency": "GBP"
+            },
+            {
+              "amount": 100,
+              "currency": "EUR"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "currencies": {
+    "USD": {
+      "id": "USD",
+      "name": "United States Dollar"
+    },
+    "GBP": {
+      "id": "GBP",
+      "name": "British Pound Sterling"
+    },
+    "EUR": {
+      "id": "EUR",
+      "name": "Euro"
+    }
+  }
+}
 ```
 
 ## License
