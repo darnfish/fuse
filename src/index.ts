@@ -44,6 +44,7 @@ type SerializeRelation = (id: string, modelName: string) => any
 
 export interface FuseOptions {
 	mergeArrays?: boolean
+	disableInternalState?: boolean
 	removeDuplicateArrayEntries?: boolean
 }
 
@@ -67,8 +68,9 @@ type SingularMap = {
 }
 
 export default class Fuse {
-	state: State
 	schema: Schema
+
+	state?: State
 
 	handlerFns: HandlerFunctions
 
@@ -96,7 +98,7 @@ export default class Fuse {
 		this.singularMap = {}
 		this.pluralMap = {}
 
-		this.options = { mergeArrays: true, removeDuplicateArrayEntries: true, ...options }
+		this.options = { mergeArrays: true, removeDuplicateArrayEntries: true, disableInternalState: false, ...options }
 
 		this.updateSchema()
 	}
@@ -153,7 +155,11 @@ export default class Fuse {
 	private buildState(valueType = 'object', silent = false, props?: Props) {
 		const changedObjectRefs = new Set([])
 
-		let newState = { ...(this.state || {}) }
+		let newState: State
+		if(this.options.disableInternalState)
+			newState = {}
+		else
+			newState = { ...(this.state || {}) }
 
 		const fetchIdfromValue = (value: Object, modelName: string) => {
 			if(!value || value.__tvsa)
@@ -238,7 +244,8 @@ export default class Fuse {
 			return serializeRelationForObject(value)
 		})
 
-		this.state = newState
+		if(!this.options.disableInternalState)
+			this.state = newState
 
 		if(!silent) {
 			this.updates = []

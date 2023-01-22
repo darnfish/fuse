@@ -33,6 +33,7 @@ declare type HandlerFunctions = {
 declare type IdExtractor = (object: Object) => any;
 export interface FuseOptions {
     mergeArrays?: boolean;
+    disableInternalState?: boolean;
     removeDuplicateArrayEntries?: boolean;
 }
 export interface FuseConstructor {
@@ -48,8 +49,8 @@ declare type SingularMap = {
     [key in string]: string;
 };
 export default class Fuse {
-    state: State;
     schema: Schema;
+    state?: State;
     handlerFns: HandlerFunctions;
     private idExtractor;
     private serializeRelation;
