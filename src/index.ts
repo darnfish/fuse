@@ -179,7 +179,7 @@ export default class Fuse {
 		if(this.options.disableInternalState)
 			newState = {}
 		else
-			newState = { ...(this.state || {}) }
+			newState = structuredClone(this.state)
 
 		const fetchIdfromValue = (value: Object, modelName: string) => {
 			if(!value || value.__fuse)
@@ -238,7 +238,7 @@ export default class Fuse {
 				})
 			}
 
-			return { ...oldObject, ...newObject }
+			return structuredClone({ ...oldObject, ...newObject })
 		}
 
 		for(const update of this.updates) {
