@@ -5,12 +5,36 @@ import { editBulkValuesAtDeepKeyPaths, editValueAtKeyPath, fetchDeepKeyPathsForV
 type SchemaRelationType = 'object' | 'array'
 
 interface SchemaRelation {
-	__tvsa: number
+	__fuse: number
 	__name: string
 	__type: SchemaRelationType
 }
 
+interface Model {
+	__plural?: any
+	__singular?: any
+	
+	__idKey?: any
+	__idExtractor?: any
+
+	[key: string]: SchemaRelation
+}
+
+// Config
+interface SchemaBuilderConfig {
+	__fuse: 1
+	__type: 'config'
+
+	model: Model
+	withPlural: (plural: any) => SchemaBuilderConfig
+	withSingular: (singular: any) => SchemaBuilderConfig
+	withCustomId: (idKey: any) => SchemaBuilderConfig
+	withIdExtractor: (idExtractor: IdExtractor) => SchemaBuilderConfig
+}
+
 interface SchemaBuilder {
+	(model: Model): SchemaBuilderConfig
+
 	object: (modelName: string) => SchemaRelation
 	array: (modelName: string) => SchemaRelation
 }
@@ -19,10 +43,6 @@ type SchemaBuilderResult = { [key in string]: any }
 
 type State = { [key in string]: any }
 type Object = { [key in string]: any }
-
-type Model = {
-	[key in string]: SchemaRelation
-}
 
 type RenderedSchema = {
 	[key in string]: Model
@@ -162,10 +182,12 @@ export default class Fuse {
 			newState = { ...(this.state || {}) }
 
 		const fetchIdfromValue = (value: Object, modelName: string) => {
-			if(!value || value.__tvsa)
+			if(!value || value.__fuse)
 				return value
 
-			const id = this.idExtractor(value)
+			const model = this.renderedSchema[modelName]
+
+			const id = value[model.__idKey] || model.__idExtractor?.(value) || this.idExtractor(value)
 			if(!id)
 				return value
 
@@ -173,13 +195,19 @@ export default class Fuse {
 			if(!serializedRelation)
 				return value
 
-			return { __tvsa: 1, __id: id, __modelName: modelName }
+			return { __fuse: 1, __id: id, __modelName: modelName }
 		}
 
 		const mergeAndCleanObjects = (oldObject: Object, newObject: Object, model: Model) => {
 			const keyPaths = Object.keys(model)
 			for(const keyPath of keyPaths) {
 				const modelSchema = model[keyPath]
+
+				switch(keyPath) {
+				case '__idKey':
+				case '__idExtractor':
+					continue
+				}
 
 				newObject = editValueAtKeyPath<Object, any, any>(newObject, keyPath, (value, keyPath) => {
 					if(modelSchema.__type === 'array') {
@@ -194,7 +222,7 @@ export default class Fuse {
 
 						if(this.options.removeDuplicateArrayEntries) {
 							const ids = newValue.map(o => {
-								if(o.__tvsa)
+								if(o.__fuse)
 									return o.__id
 
 								return o
@@ -221,10 +249,12 @@ export default class Fuse {
 			if(!newState[pluralName])
 				newState[pluralName] = {}
 
-			const objectId = this.idExtractor(object)
+			const model = this.renderedSchema[singularName]
+			const objectId = object[model.__idKey] || model.__idExtractor?.(object) || this.idExtractor(object)
 
 			const existingEntry = newState[pluralName][objectId]
-			newState[pluralName][objectId] = mergeAndCleanObjects(existingEntry, object, this.renderedSchema[singularName])
+
+			newState[pluralName][objectId] = mergeAndCleanObjects(existingEntry, object, model)
 
 			changedObjectRefs.add(`${pluralName}.${objectId}`)
 		}
@@ -236,7 +266,7 @@ export default class Fuse {
 		/**
 		 * Calculate and set new state
 		 */
-		const keyPaths = fetchDeepKeyPathsForValue<State>(newState, value => !!value.__tvsa)
+		const keyPaths = fetchDeepKeyPathsForValue<State>(newState, value => !!value.__fuse)
 		newState = editBulkValuesAtDeepKeyPaths(newState, keyPaths, (value: any) => {
 			if(Array.isArray(value))
 				return value.map(serializeRelationForObject)
@@ -291,32 +321,77 @@ export default class Fuse {
 
 	private updateSchema() {
 		const createRelation = (relationType: SchemaRelationType) => (modelName: string) => ({
-			__tvsa: 1,
+			__fuse: 1,
 			__name: modelName,
 			__type: relationType
 		})
 
-		const schema = this.schema({
-			object: createRelation('object'),
-			array: createRelation('array')
-		})
+		const builder = <SchemaBuilder> function(model) {
+			return {
+				__fuse: 1,
+				__type: 'config',
 
-		const keyValueMap: RenderedSchema = {
-
+				model,
+				withPlural: plural => {
+					return builder({
+						__plural: plural,
+						...model
+					})
+				},
+				withSingular: singular => {
+					return builder({
+						__singular: singular,
+						...model
+					})
+				},
+				withCustomId : idKey => {
+					return builder({
+						__idKey: idKey,
+						...model
+					})
+				},
+				withIdExtractor: idExtractor => {
+					return builder({
+						__idExtractor: idExtractor,
+						...model
+					})
+				}
+			}
 		}
+
+		builder.object = createRelation('object')
+		builder.array = createRelation('array')
+
+		const schema = this.schema(builder)
+		const keyValueMap: RenderedSchema = {}
 
 		function extractKeyValuesFromObject(object: Object, modelName?: string, previousKeys: string[] = []) {
 			for(const key of Object.keys(object)) {
-				const value = object[key]
+				let value = object[key]
+
+				switch(key) {
+				case '__plural':
+				case '__singular':
+				case '__idKey':
+				case '__idExtractor':
+					keyValueMap[modelName][key] = value
+					continue
+				}
 
 				if(previousKeys.length === 0)
 					keyValueMap[key] = {}
 
 				const newPreviousKeys = [...previousKeys, key]
 
-				if(value.__tvsa) {
-					keyValueMap[modelName][newPreviousKeys.slice(1, newPreviousKeys.length).join('.')] = value
-					continue
+				if(value.__fuse) {
+					switch(value.__type) {
+					case 'config':
+						value = value.model
+						break
+					default:
+						keyValueMap[modelName][newPreviousKeys.slice(1, newPreviousKeys.length).join('.')] = value
+						continue
+					}
 				}
 
 				if(typeof value === 'object')

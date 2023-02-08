@@ -1,10 +1,27 @@
 declare type SchemaRelationType = 'object' | 'array';
 interface SchemaRelation {
-    __tvsa: number;
+    __fuse: number;
     __name: string;
     __type: SchemaRelationType;
 }
+interface Model {
+    __plural?: any;
+    __singular?: any;
+    __idKey?: any;
+    __idExtractor?: any;
+    [key: string]: SchemaRelation;
+}
+interface SchemaBuilderConfig {
+    __fuse: 1;
+    __type: 'config';
+    model: Model;
+    withPlural: (plural: any) => SchemaBuilderConfig;
+    withSingular: (singular: any) => SchemaBuilderConfig;
+    withCustomId: (idKey: any) => SchemaBuilderConfig;
+    withIdExtractor: (idExtractor: IdExtractor) => SchemaBuilderConfig;
+}
 interface SchemaBuilder {
+    (model: Model): SchemaBuilderConfig;
     object: (modelName: string) => SchemaRelation;
     array: (modelName: string) => SchemaRelation;
 }
@@ -16,9 +33,6 @@ declare type State = {
 };
 declare type Object = {
     [key in string]: any;
-};
-declare type Model = {
-    [key in string]: SchemaRelation;
 };
 declare type RenderedSchema = {
     [key in string]: Model;

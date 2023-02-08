@@ -7,6 +7,7 @@
   "author": "William Gibson <william@darn.fish>",
   "license": "MIT",
   "scripts": {
+    "dev": "tsc-watch --onSuccess \"nodemon examples/currencies.js\" --compiler typescript/bin/tsc",
     "build": "tsc",
     "test": "jest",
     "test:dev": "tsc-watch --onSuccess \"yarn test\" --compiler typescript/bin/tsc",

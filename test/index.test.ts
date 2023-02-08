@@ -20,10 +20,10 @@ describe('schema', () => {
 	
 		expect(fuse.renderedSchema).toStrictEqual({
 			book: {
-				author: { __tvsa: 1, __name: 'author', __type: 'object' }
+				author: { __fuse: 1, __name: 'author', __type: 'object' }
 			},
 			author: {
-				books: { __tvsa: 1, __name: 'book', __type: 'array' }
+				books: { __fuse: 1, __name: 'book', __type: 'array' }
 			}
 		})
 	})
