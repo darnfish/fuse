@@ -1,4 +1,5 @@
 import pluralize from 'pluralize'
+import structuredClone from '@ungap/structured-clone'
 
 import { editBulkValuesAtDeepKeyPaths, editValueAtKeyPath, fetchDeepKeyPathsForValue, getValuesAtKeyPath } from './keyPaths'
 
@@ -179,7 +180,7 @@ export default class Fuse {
 		if(this.options.disableInternalState)
 			newState = {}
 		else
-			newState = structuredClone(this.state)
+			newState = structuredClone(this.state) || {}
 
 		const fetchIdfromValue = (value: Object, modelName: string) => {
 			if(!value || value.__fuse)
@@ -403,10 +404,10 @@ export default class Fuse {
 
 		// Build plural map
 		for(const modelName of Object.keys(schema)) {
-			const model = schema[modelName]
+			const kvModel = keyValueMap[modelName]
 
-			const plural = model.__plural || pluralize(modelName)
-			const singular = model.__singular || pluralize.singular(modelName)
+			const plural = kvModel?.__plural || pluralize(modelName)
+			const singular = kvModel?.__singular || pluralize.singular(modelName)
 
 			this.pluralMap[plural] = plural
 			this.pluralMap[singular] = plural
