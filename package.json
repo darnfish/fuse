@@ -1,6 +1,6 @@
 {
   "name": "fuse-state",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Relational state management",
   "main": "./lib/index.js",
   "repository": "https://github.com/darnfish/fuse",
