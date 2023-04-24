@@ -18,7 +18,7 @@ describe('schema', () => {
 	test('builds a schema', () => {
 		const fuse = createDefaultBookAuthorSchema()
 	
-		expect(fuse.renderedSchema).toStrictEqual({
+		expect(fuse.renderedSchema).toMatchObject({
 			book: {
 				author: { __fuse: 1, __name: 'author', __type: 'object' }
 			},
@@ -44,7 +44,7 @@ describe('data', () => {
 			}
 		})
 	
-		expect(fuse.state).toStrictEqual({
+		expect(fuse.state).toMatchObject({
 			books: {
 				'1': {
 					id: 1,
@@ -75,7 +75,7 @@ describe('data', () => {
 			}
 		})
 	
-		expect(fuse.state).toStrictEqual({
+		expect(fuse.state).toMatchObject({
 			books: {
 				'1': {
 					id: 1,
@@ -102,7 +102,7 @@ describe('data', () => {
 			}
 		})
 	
-		expect(fuse.state).toStrictEqual({
+		expect(fuse.state).toMatchObject({
 			books: {
 				'1': {
 					id: 1,

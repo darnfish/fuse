@@ -11,13 +11,12 @@
     "build": "tsc",
     "test": "jest",
     "test:dev": "tsc-watch --onSuccess \"yarn test\" --compiler typescript/bin/tsc",
-		"lint": "eslint src --ext .ts,.json",
-		"lint:fix": "yarn lint --fix"
+    "lint": "eslint src --ext .ts,.json",
+    "lint:fix": "yarn lint --fix"
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "pluralize": "^8.0.0",
-    "underscore-keypath": "^0.9.3"
+    "pluralize": "^8.0.0"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.18.6",

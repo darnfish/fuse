@@ -1,4 +1,24 @@
-import _ from 'underscore-keypath'
+import structuredClone from '@ungap/structured-clone'
+
+function setValueForKeyPath<T>(object: T, keyPath: string, newValue: any): T {
+	object = structuredClone(object)
+
+	// If key path is direct (e.g. user) then just set it directly
+	const keyPaths = keyPath.split('.')
+	if(keyPaths.length === 1) {
+		object[keyPaths[0]] = newValue
+
+		return object
+	}
+
+	let currentKeyPath: string | number = keyPaths[0]
+	if(!Number.isNaN(parseInt(currentKeyPath)))
+		currentKeyPath = parseInt(currentKeyPath)
+
+	object[currentKeyPath] = setValueForKeyPath(object[currentKeyPath], keyPaths.slice(1).join('.'), newValue)
+
+	return object
+}
 
 export function getValuesAtKeyPath<T>(object: T, keyPath: string) {
 	const values = []
@@ -167,7 +187,7 @@ export function fetchDeepKeyPathsForValue<T>(rootObject: T, testValue: (value: a
 
 export function editValueAtKeyPath<T, V, R>(object: T, keyPath: string, editFn: (oldValue: V, deepKeyPath: string) => R, isDeepKeyPath = false): T {
 	if(keyPath.includes('.')) {
-		const currentValue = JSON.parse(JSON.stringify(object))
+		let currentValue = JSON.parse(JSON.stringify(object))
 
 		let deepKeyPaths: string[]
 		if(isDeepKeyPath)
@@ -182,7 +202,7 @@ export function editValueAtKeyPath<T, V, R>(object: T, keyPath: string, editFn: 
 			const [oldValue] = getValuesAtKeyPath(object, deepKeyPath)
 			const editedValue = editFn(oldValue, deepKeyPath)
 
-			_(currentValue).setValueForKeyPath(deepKeyPath, editedValue)
+			currentValue = setValueForKeyPath(currentValue, deepKeyPath, editedValue)
 		}
 
 		return currentValue
@@ -203,7 +223,7 @@ export function editBulkValuesAtDeepKeyPaths<T, V, R>(object: T, keyPaths: strin
 			const [oldValue] = getValuesAtKeyPath(object, keyPath)
 			const editedValue = editFn(oldValue, keyPath)
 
-			_(object).setValueForKeyPath(keyPath, editedValue)
+			object = setValueForKeyPath(object, keyPath, editedValue)
 	
 			continue
 		}
