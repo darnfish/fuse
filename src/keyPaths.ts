@@ -15,6 +15,10 @@ function setValueForKeyPath<T>(object: T, keyPath: string, newValue: any): T {
 	if(!Number.isNaN(parseInt(currentKeyPath)))
 		currentKeyPath = parseInt(currentKeyPath)
 
+	// Can't find currentKeyPath on object, return
+	if(!object[currentKeyPath])
+		return object
+
 	object[currentKeyPath] = setValueForKeyPath(object[currentKeyPath], keyPaths.slice(1).join('.'), newValue)
 
 	return object
