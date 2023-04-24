@@ -196,7 +196,7 @@ export default class Fuse {
 			if(!serializedRelation)
 				return value
 
-			return { __fuse: 1, __id: id, __modelName: modelName }
+			return serializedRelation
 		}
 
 		const mergeAndCleanObjects = (oldObject: Object, newObject: Object, model: Model) => {
