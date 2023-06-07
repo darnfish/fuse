@@ -138,17 +138,17 @@ export default class Fuse {
 				object
 			})
 
-			for(const keyPath of Object.keys(model)) {
+			Object.keys(model).forEach(keyPath => {
 				const values = getValuesAtKeyPath<Object>(object, keyPath)
 
-				for(const value of values) {
+				values.forEach(value => {
 					const valueModelName = model[keyPath].__name
 					crawlTree(valueModelName, this.renderedSchema[valueModelName], value)
-				}
-			}
+				})
+			})
 		}
 
-		for(const modelName of updatedModels) {
+		updatedModels.forEach(modelName => {
 			let model = schema[modelName]
 			const object = newState[modelName]
 
@@ -157,18 +157,18 @@ export default class Fuse {
 				model = schema[singular]
 
 				const objects = newState[modelName]
-				for(const object of objects) {
+				objects.forEach(object => {
 					crawlTree(singular, model, object)
-				}
+				})
 
-				continue
+				return
 			}
 
 			if(!model)
 				throw new Error(`Can't find schema for "${modelName}"`)
 
 			crawlTree(modelName, model, object)
-		}
+		})
 
 		this.buildState('object', false, props)
 	}
@@ -201,13 +201,13 @@ export default class Fuse {
 
 		const mergeAndCleanObjects = (oldObject: Object, newObject: Object, model: Model) => {
 			const keyPaths = Object.keys(model)
-			for(const keyPath of keyPaths) {
+			keyPaths.forEach(keyPath => {
 				const modelSchema = model[keyPath]
 
 				switch(keyPath) {
 				case '__idKey':
 				case '__idExtractor':
-					continue
+					return
 				}
 
 				newObject = editValueAtKeyPath<Object, any, any>(newObject, keyPath, (value, keyPath) => {
@@ -218,18 +218,13 @@ export default class Fuse {
 							newValue.push(...getValuesAtKeyPath(oldObject, keyPath))
 
 						newValue.push(...value)
-						newValue = newValue.map(value => fetchIdfromValue(value, modelSchema.__name))
-						newValue = newValue.filter(v => !!v)
+						newValue = newValue
+							.map(value => fetchIdfromValue(value, modelSchema.__name))
+							.filter(v => !!v)
 
 						if(this.options.removeDuplicateArrayEntries) {
-							const ids = newValue.map(o => {
-								if(o.__fuse)
-									return o.__id
-
-								return o
-							})
-
-							newValue = Array.from(new Set(ids)).map(value => fetchIdfromValue(value, modelSchema.__name))
+							const ids = new Set(newValue.map(o => o.__fuse ? o.__id : o));
+							newValue = Array.from(ids).map(value => fetchIdfromValue(value, modelSchema.__name));
 						}
 
 						return newValue
@@ -237,18 +232,16 @@ export default class Fuse {
 
 					return fetchIdfromValue(value, modelSchema.__name)
 				})
-			}
+			})
 
 			return structuredClone({ ...oldObject, ...newObject })
 		}
 
-		for(const update of this.updates) {
-			const { name, object } = update
-
+		this.updates.forEach(({ name, object }) => {
 			const pluralName = this.pluralMap[name]
 			const singularName = this.singularMap[name]
-			if(!newState[pluralName])
-				newState[pluralName] = {}
+
+			newState[pluralName] = newState[pluralName] || {}
 
 			const model = this.renderedSchema[singularName]
 			const objectId = object[model.__idKey] || model.__idExtractor?.(object) || this.idExtractor(object)
@@ -258,7 +251,7 @@ export default class Fuse {
 			newState[pluralName][objectId] = mergeAndCleanObjects(existingEntry, object, model)
 
 			changedObjectRefs.add(`${pluralName}.${objectId}`)
-		}
+		})
 
 		const serializeRelationForObject = (object: Object) => {
 			return this.serializeRelation(object.__id, object.__modelName)
@@ -283,7 +276,7 @@ export default class Fuse {
  
 			if(this.handlerFns) {
 				const changedState = {}
-				for(const changedObjectRef of changedObjectRefs) {
+				changedObjectRefs.forEach(changedObjectRef => {
 					const [name, objectId] = changedObjectRef.split('.')
 					const object = newState[name][objectId]
 		
@@ -291,27 +284,26 @@ export default class Fuse {
 						changedState[name] = {}
 		
 					changedState[name][objectId] = object
-				}
+				})
 		
 				const changedStateModels = Object.keys(changedState)
-				for(const changedStateModel of changedStateModels) {
+				changedStateModels.forEach(changedStateModel => {
 					const pluralName = this.pluralMap[changedStateModel]
 					if(this.handlerFns[pluralName])
 						this.handlerFns[pluralName](changedState[changedStateModel], props)
 		
 					const singularName = this.singularMap[changedStateModel]
 					if(this.handlerFns[singularName])
-						for(const changedObject of Object.values(changedState[changedStateModel]))
-							this.handlerFns[singularName](changedObject, props)
-				}
+						Object.values(changedState[changedStateModel]).forEach(changedObject =>
+							this.handlerFns[singularName](changedObject, props))
+				})
 			}
 		}
 
 		switch(valueType) {
 		case 'array': {
-			const keys = Object.keys(newState)
-			for(const key of keys)
-				newState[key] = Object.values(newState[key])
+			Object.keys(newState).forEach(key =>
+				newState[key] = Object.values(newState[key]))
 
 			break
 		}
@@ -367,7 +359,7 @@ export default class Fuse {
 		const keyValueMap: RenderedSchema = {}
 
 		function extractKeyValuesFromObject(object: Object, modelName?: string, previousKeys: string[] = []) {
-			for(const key of Object.keys(object)) {
+			Object.keys(object).forEach(key => {
 				let value = object[key]
 
 				switch(key) {
@@ -376,7 +368,7 @@ export default class Fuse {
 				case '__idKey':
 				case '__idExtractor':
 					keyValueMap[modelName][key] = value
-					continue
+					return
 				}
 
 				if(previousKeys.length === 0)
@@ -391,19 +383,19 @@ export default class Fuse {
 						break
 					default:
 						keyValueMap[modelName][newPreviousKeys.slice(1, newPreviousKeys.length).join('.')] = value
-						continue
+						return
 					}
 				}
 
 				if(typeof value === 'object')
 					extractKeyValuesFromObject(value, modelName || key, newPreviousKeys)
-			}
+			})
 		}
 
 		extractKeyValuesFromObject(schema)
 
 		// Build plural map
-		for(const modelName of Object.keys(schema)) {
+		Object.keys(schema).forEach(modelName => {
 			const kvModel = keyValueMap[modelName]
 
 			const plural = kvModel?.__plural || pluralize(modelName)
@@ -414,7 +406,7 @@ export default class Fuse {
 
 			this.singularMap[plural] = singular
 			this.singularMap[singular] = singular
-		}
+		})
 
 		this.renderedSchema = keyValueMap
 	}
