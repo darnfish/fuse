@@ -41,8 +41,8 @@ export function getValuesAtKeyPath<T>(object: T, keyPath: string) {
 			if(Number.isInteger(keyPathIndex))
 				currentValue = currentValue[keyPathIndex]
 			else {
-				for(const item of currentValue)
-					values.push(...getValuesAtKeyPath(item, remainingKeyPath)) 
+				currentValue.forEach(item =>
+					values.push(...getValuesAtKeyPath(item, remainingKeyPath)))
 
 				break
 			}
@@ -77,11 +77,11 @@ export function fetchDeepKeyPaths<T>(object: T, keyPath: string, rCI = 0): strin
 			let itemIndex = 0
 			const fetchedDeepKeyPaths = []
 
-			for(const item of currentValue) {
+			currentValue.forEach(item => {
 				fetchedDeepKeyPaths[itemIndex] = fetchDeepKeyPaths(item, remainingKeyPath, rCI + 1) 
 
 				itemIndex += 1
-			}
+			})
 
 			currentKeyPath.push(fetchedDeepKeyPaths)
 
@@ -152,39 +152,39 @@ export function fetchDeepKeyPathsForValue<T>(rootObject: T, testValue: (value: a
 	const keys = Object.keys(rootObject)
 	const keyPaths = []
 
-	for(const key of keys) {
+	keys.forEach(key => {
 		const object = rootObject[key]
 
 		if(Array.isArray(object)) {
 			let i = 0
-			for(const item of object) {
+			object.forEach(item => {
 				keyPaths.push(
 					...fetchDeepKeyPathsForValue(item, testValue, `${preceedingKeyPath ? `${preceedingKeyPath}.` : ''}${key}.${i}`, rCI + 1)
 				)
 
 				i += 1
-			}
+			})
 
-			continue
+			return
 		}
 
 		if(object === null || typeof object === 'undefined')
-			continue
+			return
 
 		const isValue = testValue(object)
 		if(isValue) {
 			keyPaths.push(`${preceedingKeyPath ? `${preceedingKeyPath}.` : ''}${key}`)
 
-			continue
+			return
 		}
 
 		if(typeof object !== 'object')
-			continue
+			return
 
 		keyPaths.push(
 			...fetchDeepKeyPathsForValue(object, testValue, `${preceedingKeyPath ? `${preceedingKeyPath}.` : ''}${key}`, rCI + 1)
 		)
-	}
+	})
 
 	return keyPaths
 }
@@ -202,12 +202,12 @@ export function editValueAtKeyPath<T, V, R>(object: T, keyPath: string, editFn: 
 		if(!deepKeyPaths)
 			return currentValue
 
-		for(const deepKeyPath of deepKeyPaths) {
+		deepKeyPaths.forEach(deepKeyPath => {
 			const [oldValue] = getValuesAtKeyPath(object, deepKeyPath)
 			const editedValue = editFn(oldValue, deepKeyPath)
 
 			currentValue = setValueForKeyPath(currentValue, deepKeyPath, editedValue)
-		}
+		})
 
 		return currentValue
 	}
@@ -222,22 +222,22 @@ export function editValueAtKeyPath<T, V, R>(object: T, keyPath: string, editFn: 
 }
 
 export function editBulkValuesAtDeepKeyPaths<T, V, R>(object: T, keyPaths: string[], editFn: (oldValue: V, deepKeyPath: string) => R): T {
-	for(const keyPath of keyPaths) {
+	keyPaths.forEach(keyPath => {
 		if(keyPath.includes('.')) {
 			const [oldValue] = getValuesAtKeyPath(object, keyPath)
 			const editedValue = editFn(oldValue, keyPath)
 
 			object = setValueForKeyPath(object, keyPath, editedValue)
 	
-			continue
+			return
 		}
 	
 		if(!object[keyPath])
-			continue
+			return
 		
 		object = JSON.parse(JSON.stringify(object))
 		object[keyPath] = editFn(object[keyPath], keyPath)
-	}
+	})
 
 	return object
 }
