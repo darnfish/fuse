@@ -6,9 +6,6 @@
   "repository": "https://github.com/darnfish/fuse",
   "author": "William Gibson <william@darn.fish>",
   "license": "MIT",
-  "engines": {
-    "yarn": "3.5.0"
-  },
   "scripts": {
     "dev": "tsc-watch --onSuccess \"nodemon examples/currencies.js\" --compiler typescript/bin/tsc",
     "build": "tsc",
