@@ -158,9 +158,10 @@ export function fetchDeepKeyPathsForValue<T>(rootObject: T, testValue: (value: a
 		if(Array.isArray(object)) {
 			let i = 0
 			object.forEach(item => {
-				keyPaths.push(
-					...fetchDeepKeyPathsForValue(item, testValue, `${preceedingKeyPath ? `${preceedingKeyPath}.` : ''}${key}.${i}`, rCI + 1)
-				)
+				if(item)
+					keyPaths.push(
+						...fetchDeepKeyPathsForValue(item, testValue, `${preceedingKeyPath ? `${preceedingKeyPath}.` : ''}${key}.${i}`, rCI + 1)
+					)
 
 				i += 1
 			})
