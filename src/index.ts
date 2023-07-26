@@ -223,8 +223,8 @@ export default class Fuse {
 							.filter(v => !!v)
 
 						if(this.options.removeDuplicateArrayEntries) {
-							const ids = new Set(newValue.map(o => o.__fuse ? o.__id : o));
-							newValue = Array.from(ids).map(value => fetchIdfromValue(value, modelSchema.__name));
+							const ids = new Set(newValue.map(o => o.__fuse ? o.__id : o))
+							newValue = Array.from(ids).map(value => fetchIdfromValue(value, modelSchema.__name))
 						}
 
 						return newValue
