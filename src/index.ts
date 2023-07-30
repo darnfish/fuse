@@ -18,7 +18,7 @@ interface Model {
 	__idKey?: any
 	__idExtractor?: any
 
-	[key: string]: SchemaRelation
+	[key: string]: Model | SchemaRelation
 }
 
 // Config
@@ -142,7 +142,7 @@ export default class Fuse {
 				const values = getValuesAtKeyPath<Object>(object, keyPath)
 
 				values.forEach(value => {
-					const valueModelName = model[keyPath].__name
+					const valueModelName = model[keyPath].__name as string
 					crawlTree(valueModelName, this.renderedSchema[valueModelName], value)
 				})
 			})
@@ -219,18 +219,18 @@ export default class Fuse {
 
 						newValue.push(...value)
 						newValue = newValue
-							.map(value => fetchIdfromValue(value, modelSchema.__name))
+							.map(value => fetchIdfromValue(value, modelSchema.__name as string))
 							.filter(v => !!v)
 
 						if(this.options.removeDuplicateArrayEntries) {
 							const ids = new Set(newValue.map(o => o.__fuse ? o.__id : o))
-							newValue = Array.from(ids).map(value => fetchIdfromValue(value, modelSchema.__name))
+							newValue = Array.from(ids).map(value => fetchIdfromValue(value, modelSchema.__name as string))
 						}
 
 						return newValue
 					}
 
-					return fetchIdfromValue(value, modelSchema.__name)
+					return fetchIdfromValue(value, modelSchema.__name as string)
 				})
 			})
 
